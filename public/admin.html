@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ผู้ดูแล — ยืมเงินด้วย QR</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main id="login" class="wrap narrow hidden">
+      <form id="loginForm" class="card">
+        <h1>เข้าสู่ระบบผู้ดูแล</h1>
+        <div class="row">
+          <input id="password" type="password" placeholder="รหัสผ่าน" autocomplete="current-password" required />
+          <button class="primary" type="submit">เข้าสู่ระบบ</button>
+        </div>
+        <p id="loginError" class="error"></p>
+      </form>
+    </main>
+
+    <main id="app" class="wrap hidden">
+      <div class="row spread no-print" style="margin-bottom: 16px">
+        <h1 style="margin: 0">ผู้ดูแลระบบยืมเงิน</h1>
+        <div class="row">
+          <span id="storage" class="badge"></span>
+          <button id="logout" class="small" type="button">ออกจากระบบ</button>
+        </div>
+      </div>
+
+      <!-- หน้าแรก: ภาพรวมและรายชื่อ -->
+      <div id="listView">
+        <div id="totalStats" class="stats no-print"></div>
+
+        <section class="card no-print">
+          <div class="row spread">
+            <h2 style="margin: 0">รายชื่อผู้ยืม</h2>
+            <button id="print" class="small" type="button">พิมพ์ QR ทั้งหมด</button>
+          </div>
+          <form id="personForm" class="row" style="margin-top: 12px">
+            <input id="personName" type="text" maxlength="80" placeholder="ชื่อผู้ยืมคนใหม่" required />
+            <button class="primary" type="submit">เพิ่มและสร้าง QR</button>
+          </form>
+          <p id="personError" class="error"></p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อ</th>
+                  <th class="num">ยืม</th>
+                  <th class="num">คืนแล้ว</th>
+                  <th class="num">คงค้าง</th>
+                </tr>
+              </thead>
+              <tbody id="people"></tbody>
+              <tfoot id="peopleTotal"></tfoot>
+            </table>
+          </div>
+          <p class="muted">กดที่ชื่อเพื่อดูรายละเอียด QR และบันทึกการคืนเงิน</p>
+        </section>
+
+        <div id="printGrid" class="qr-grid print-only"></div>
+
+        <section class="card no-print">
+          <div class="row spread">
+            <h2 style="margin: 0">รายการทั้งหมด</h2>
+            <div class="row">
+              <a class="btn small" href="/api/admin/export.csv">Export CSV</a>
+              <a class="btn small" href="/api/admin/export.xlsx">Export XLSX</a>
+              <button id="refresh" class="small" type="button">รีเฟรช</button>
+            </div>
+          </div>
+          <div class="table-scroll" style="margin-top: 12px">
+            <table>
+              <thead>
+                <tr>
+                  <th>วันที่เวลา</th>
+                  <th>ชื่อ</th>
+                  <th class="num">ยืม</th>
+                  <th class="num">คืน</th>
+                  <th>หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="loans"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card no-print">
+          <h2>ล้างข้อมูล</h2>
+          <p class="muted">ลบถาวร กู้คืนไม่ได้ — แนะนำให้ Export ก่อน</p>
+          <div class="row">
+            <button class="danger" type="button" data-clear="loans">ลบรายการยืม-คืนทั้งหมด</button>
+            <button class="danger" type="button" data-clear="people">ลบรายชื่อและ QR ทั้งหมด</button>
+            <button class="danger" type="button" data-clear="all">ลบทุกอย่าง</button>
+          </div>
+          <p class="muted">
+            ลบรายการยืม-คืน = รายชื่อและ QR ยังอยู่ · ลบรายชื่อและ QR = รายการยืม-คืนยังอยู่
+          </p>
+          <p id="clearError" class="error"></p>
+        </section>
+      </div>
+
+      <!-- หน้ารายละเอียดของแต่ละคน -->
+      <div id="detailView" class="hidden">
+        <a class="back no-print" href="#/">‹ กลับไปรายชื่อทั้งหมด</a>
+        <h1 id="detailName" class="no-print"></h1>
+        <div id="detailStats" class="stats no-print"></div>
+
+        <div class="detail-grid" style="margin-bottom: 16px">
+          <section class="card">
+            <div id="detailQr" class="qr-card" style="border: 0; padding: 0"></div>
+          </section>
+
+          <section class="card no-print">
+            <h2>บันทึกการคืนเงิน</h2>
+            <form id="repayForm" class="stack">
+              <input id="repayAmount" type="text" inputmode="decimal" placeholder="จำนวนเงินที่คืน (บาท)" required />
+              <input id="repayNote" type="text" maxlength="200" placeholder="หมายเหตุ (ไม่บังคับ)" />
+              <button class="primary" type="submit">บันทึกคืนเงิน</button>
+            </form>
+            <p id="repayMessage" class="error"></p>
+          </section>
+        </div>
+
+        <section class="card no-print">
+          <h2>ประวัติยืม-คืน</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>วันที่เวลา</th>
+                  <th class="num">ยืม</th>
+                  <th class="num">คืน</th>
+                  <th>หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="detailLoans"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card no-print">
+          <h2>ลบ</h2>
+          <div class="row">
+            <button id="deleteLoans" class="danger" type="button">ลบประวัติยืม-คืน</button>
+            <button id="deletePerson" class="danger" type="button">ลบบุคคลและ QR</button>
+          </div>
+          <p class="muted">
+            ลบประวัติ = ยอดกลับเป็น 0 ชื่อและ QR ยังอยู่ · ลบบุคคลและ QR = ชื่อหายไปและ QR สแกนไม่ได้อีก
+            แต่ประวัติยืม-คืนยังอยู่ในรายการทั้งหมด
+          </p>
+          <p id="detailError" class="error"></p>
+        </section>
+      </div>
+    </main>
+    <script src="/admin.js"></script>
+  </body>
+</html>

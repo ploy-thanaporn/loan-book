@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>บันทึกการยืมเงิน</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="wrap narrow">
+      <div id="loading" class="card muted">กำลังโหลด…</div>
+
+      <div id="notFound" class="card hidden">
+        <h1>ไม่พบ QR นี้</h1>
+        <p class="muted">QR อาจถูกลบไปแล้ว กรุณาติดต่อผู้ดูแล</p>
+      </div>
+
+      <div id="form" class="card hidden">
+        <p class="muted">ผู้ยืม</p>
+        <h1 id="personName"></h1>
+        <div class="amount"><span id="amount">0</span> <small>บาท</small></div>
+        <div class="keypad" id="keypad">
+          <button type="button" data-key="1">1</button>
+          <button type="button" data-key="2">2</button>
+          <button type="button" data-key="3">3</button>
+          <button type="button" data-key="4">4</button>
+          <button type="button" data-key="5">5</button>
+          <button type="button" data-key="6">6</button>
+          <button type="button" data-key="7">7</button>
+          <button type="button" data-key="8">8</button>
+          <button type="button" data-key="9">9</button>
+          <button type="button" data-key="clear">ล้าง</button>
+          <button type="button" data-key="0">0</button>
+          <button type="button" data-key="back" aria-label="ลบ">⌫</button>
+        </div>
+        <div class="row">
+          <input id="note" type="text" maxlength="200" placeholder="หมายเหตุ (ไม่บังคับ)" />
+        </div>
+        <p id="error" class="error"></p>
+        <button id="save" type="button" class="primary block" disabled>บันทึกการยืม</button>
+      </div>
+
+      <div id="success" class="card success hidden">
+        <div class="tick">✓</div>
+        <h1>บันทึกแล้ว</h1>
+        <p><span id="doneName"></span> ยืม <strong id="doneAmount"></strong> บาท</p>
+        <p class="muted" id="doneTime"></p>
+        <button id="again" type="button" class="block">บันทึกอีกรายการ</button>
+      </div>
+    </main>
+    <script src="/borrow.js"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "loan-qr",
+  "version": "1.0.0",
+  "description": "ระบบบันทึกการยืมเงินด้วยการสแกน QR Code (เก็บข้อมูลใน Google Sheets)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "google-auth-library": "^9.14.0",
+    "html5-qrcode": "^2.3.8",
+    "qrcode": "^1.5.4"
+  }
+}

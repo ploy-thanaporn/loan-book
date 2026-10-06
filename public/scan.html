@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>สแกน QR</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="wrap narrow">
+      <div class="card">
+        <h1>สแกน QR</h1>
+        <div id="reader"></div>
+        <p id="message" class="error"></p>
+        <p class="muted">
+          หรือเปิดแอปกล้องของมือถือแล้วส่องที่ QR ได้เลย ระบบจะพาไปหน้ากรอกจำนวนเงิน
+        </p>
+      </div>
+    </main>
+    <script src="/vendor/html5-qrcode.min.js"></script>
+    <script>
+      const message = document.getElementById('message');
+      const scanner = new Html5Qrcode('reader');
+      let done = false;
+
+      scanner
+        .start({ facingMode: 'environment' }, { fps: 10, qrbox: 240 }, (text) => {
+          if (done) return;
+          // รับเฉพาะ QR ของระบบนี้ และเปิดบนโดเมนปัจจุบันเสมอ
+          const match = text.trim().match(/\/b\/([A-Za-z0-9_-]+)$/);
+          if (!match) {
+            message.textContent = 'QR นี้ไม่ใช่ของระบบยืมเงิน';
+            return;
+          }
+          done = true;
+          scanner.stop().finally(() => {
+            location.href = `/b/${match[1]}`;
+          });
+        })
+        .catch(() => {
+          message.textContent =
+            'เปิดกล้องในเบราว์เซอร์ไม่ได้ (ต้องอนุญาตกล้อง และใช้งานผ่าน https) — ใช้แอปกล้องของมือถือสแกนแทนได้';
+        });
+    </script>
+  </body>
+</html>
