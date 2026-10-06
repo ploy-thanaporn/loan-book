@@ -16,11 +16,11 @@ npm start
 
 ## หน้าต่าง ๆ
 
-| หน้า | ใช้ทำอะไร |
-| --- | --- |
-| `/admin` | สร้าง/ลบ QR, บันทึกการคืนเงิน, ดูรายการยืม-คืนและยอดคงค้าง, Export CSV / XLSX, ล้างข้อมูล |
-| `/b/<รหัส>` | หน้าที่ QR พาไป — กดจำนวนเงินแล้วบันทึก |
-| `/scan` | สแกน QR ในเบราว์เซอร์ |
+| หน้า        | ใช้ทำอะไร                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| `/admin`    | สร้าง/ลบ QR, บันทึกการคืนเงิน, ดูรายการยืม-คืนและยอดคงค้าง, Export CSV / XLSX, ล้างข้อมูล |
+| `/b/<รหัส>` | หน้าที่ QR พาไป — กดจำนวนเงินแล้วบันทึก                                                   |
+| `/scan`     | สแกน QR ในเบราว์เซอร์                                                                     |
 
 ## ต่อ Google Sheets
 
@@ -32,14 +32,3 @@ npm start
 6. ใส่ `GOOGLE_SHEET_ID=...` ใน `.env` แล้ว `npm start` ใหม่
 
 ระบบจะสร้างแท็บ `people` และ `loans` พร้อมหัวตารางให้เอง หน้า admin จะแสดงป้าย "Google Sheets" เมื่อเชื่อมสำเร็จ
-
-## Deploy ฟรี
-
-GitHub Pages รันได้เฉพาะเว็บ static จึงรัน Node.js ตัวนี้ไม่ได้ ให้ push โค้ดขึ้น GitHub แล้วต่อ repo กับบริการที่รัน Node ฟรี เช่น [Render](https://render.com) (Web Service, Free):
-
-- Build command: `npm install` / Start command: `npm start`
-- Environment variables: `ADMIN_PASSWORD`, `GOOGLE_SHEET_ID`, `GOOGLE_CREDENTIALS_JSON` (เนื้อหาไฟล์ `credentials.json` ทั้งไฟล์), `PUBLIC_BASE_URL` (URL ของเว็บที่ได้)
-- ต้องใช้ Google Sheets เมื่อ deploy เพราะไฟล์ในเครื่องของบริการฟรีจะหายเมื่อรีสตาร์ต
-- QR ที่สร้างตอนรันในเครื่องชี้ไปที่ IP ในวง Wi-Fi หลัง deploy ให้ดาวน์โหลด/พิมพ์ QR ใหม่จากหน้า admin (รายชื่อเดิมใช้ต่อได้)
-
-ไฟล์ `.env`, `credentials.json` และ `data/` ถูกใส่ใน `.gitignore` แล้ว ห้าม commit ขึ้น GitHub
