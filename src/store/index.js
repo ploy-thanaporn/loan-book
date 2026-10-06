@@ -30,6 +30,8 @@ const sheetId = (raw) => {
   return match ? match[1] : text;
 };
 
+let missingVariable = null;
+
 function loadCredentials() {
   if (envText(process.env.GOOGLE_CREDENTIALS_JSON)) {
     const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
@@ -39,6 +41,10 @@ function loadCredentials() {
   const key = envText(process.env.GOOGLE_PRIVATE_KEY);
   if (email && key) {
     return { client_email: email, private_key: normalizePrivateKey(key) };
+  }
+  // ตั้งมาแค่ตัวเดียว: จำไว้เพื่อบอกให้ตรงว่าขาดตัวไหน (ถ้าไม่มี credentials.json ให้ใช้แทน)
+  if (email || key) {
+    missingVariable = email ? 'GOOGLE_PRIVATE_KEY' : 'GOOGLE_SERVICE_ACCOUNT_EMAIL';
   }
   const file = path.resolve(ROOT, process.env.GOOGLE_CREDENTIALS_FILE || 'credentials.json');
   if (fs.existsSync(file)) {
@@ -54,6 +60,18 @@ function createStore() {
     return createLocalStore(path.resolve(ROOT, process.env.DATA_FILE || 'data/db.json'));
   }
   const credentials = loadCredentials();
+  if (!credentials && missingVariable) {
+    const other =
+      missingVariable === 'GOOGLE_PRIVATE_KEY' ? 'GOOGLE_SERVICE_ACCOUNT_EMAIL' : 'GOOGLE_PRIVATE_KEY';
+    const hint =
+      missingVariable === 'GOOGLE_PRIVATE_KEY'
+        ? 'ค่า private_key ใน credentials.json'
+        : 'ค่า client_email ใน credentials.json';
+    throw Object.assign(
+      new Error(`มี ${other} แล้ว แต่ยังไม่มี ${missingVariable} (${hint})`),
+      { setup: true },
+    );
+  }
   if (!credentials) {
     throw new Error(
       'ตั้งค่า GOOGLE_SHEET_ID แล้วแต่ไม่พบ credentials ของ service account ' +

@@ -17,6 +17,7 @@ function load() {
 function explain(err) {
   const message = String(err?.message || err);
   const status = err?.response?.status || err?.status;
+  if (err?.setup) return message;
   if (/ไม่พบ credentials/.test(message)) {
     return 'ยังไม่เห็นค่า GOOGLE_SERVICE_ACCOUNT_EMAIL หรือ GOOGLE_PRIVATE_KEY';
   }
