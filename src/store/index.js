@@ -67,8 +67,16 @@ function createStore() {
       missingVariable === 'GOOGLE_PRIVATE_KEY'
         ? 'ค่า private_key ใน credentials.json'
         : 'ค่า client_email ใน credentials.json';
+    // แสดงเฉพาะชื่อตัวแปรที่เซิร์ฟเวอร์เห็นจริง (ไม่แสดงค่า) เพื่อช่วยไล่ว่าค่าที่ตั้งไว้มาถึงหรือยัง
+    const seen = Object.keys(process.env)
+      .filter((name) => name.trim().startsWith('GOOGLE_'))
+      .map((name) => (envText(process.env[name]) ? `"${name}"` : `"${name}" (ค่าว่าง)`))
+      .sort()
+      .join(', ');
     throw Object.assign(
-      new Error(`มี ${other} แล้ว แต่ยังไม่มี ${missingVariable} (${hint})`),
+      new Error(
+        `มี ${other} แล้ว แต่ยังไม่มี ${missingVariable} (${hint}) — ตัวแปรที่เซิร์ฟเวอร์เห็นตอนนี้: ${seen}`,
+      ),
       { setup: true },
     );
   }
