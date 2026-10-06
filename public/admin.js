@@ -10,19 +10,29 @@ const el = (tag, props = {}, children = []) => {
 
 let state = null;
 
-const showLogin = (visible) => {
-  $('login').classList.toggle('hidden', !visible);
-  $('app').classList.toggle('hidden', visible);
+const showView = (name) => {
+  for (const view of ['login', 'app', 'fatal']) $(view).classList.toggle('hidden', view !== name);
 };
+const showLogin = (visible) => showView(visible ? 'login' : 'app');
+
+// โหลดครั้งแรกไม่สำเร็จด้วยเหตุอื่นที่ไม่ใช่ "ยังไม่ได้ล็อกอิน" ต้องบอกสาเหตุ ไม่ปล่อยหน้าว่าง
+const start = () =>
+  load().catch((err) => {
+    if (!$('login').classList.contains('hidden')) return;
+    $('fatalMessage').textContent = err.message;
+    showView('fatal');
+  });
 
 const api = async (url, options = {}) => {
   const res = await fetch(url, {
     ...options,
     headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
+  }).catch(() => {
+    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !url.endsWith('/login')) showLogin(true);
-  if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+  if (!res.ok) throw new Error(data.error || `เกิดข้อผิดพลาด (HTTP ${res.status})`);
   return data;
 };
 
@@ -295,4 +305,5 @@ for (const button of document.querySelectorAll('[data-clear]')) {
   });
 }
 
-load().catch(() => {});
+$('retry').addEventListener('click', start);
+start();

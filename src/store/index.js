@@ -5,15 +5,40 @@ const { createSheetsStore } = require('./sheets');
 
 const ROOT = path.join(__dirname, '..', '..');
 
+// ตัดช่องว่าง เครื่องหมายคำพูด และ , ท้ายบรรทัด ที่มักติดมาตอนคัดลอกค่าจากไฟล์ JSON
+const envText = (value) =>
+  (value || '')
+    .trim()
+    .replace(/,$/, '')
+    .replace(/^(["'])([\s\S]*)\1$/, '$2')
+    .trim();
+
+// หน้าตั้งค่าบางที่แปลงการขึ้นบรรทัดใหม่ในกุญแจเป็นช่องว่างหรือ \n ตัวอักษร จึงจัดรูปแบบ PEM ใหม่เสมอ
+function normalizePrivateKey(raw) {
+  const text = envText(raw).replace(/\\n/g, '\n');
+  const match = text.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  if (!match) return text;
+  const body = match[1].replace(/\s+/g, '');
+  const lines = body.match(/.{1,64}/g) || [];
+  return `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----\n`;
+}
+
+// รับได้ทั้ง ID ล้วนและ URL เต็มของชีต
+const sheetId = (raw) => {
+  const text = envText(raw);
+  const match = text.match(/\/d\/([A-Za-z0-9_-]+)/);
+  return match ? match[1] : text;
+};
+
 function loadCredentials() {
-  if (process.env.GOOGLE_CREDENTIALS_JSON) {
-    return JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+  if (envText(process.env.GOOGLE_CREDENTIALS_JSON)) {
+    const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+    return { ...parsed, private_key: normalizePrivateKey(parsed.private_key) };
   }
-  if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-    return {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    };
+  const email = envText(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+  const key = envText(process.env.GOOGLE_PRIVATE_KEY);
+  if (email && key) {
+    return { client_email: email, private_key: normalizePrivateKey(key) };
   }
   const file = path.resolve(ROOT, process.env.GOOGLE_CREDENTIALS_FILE || 'credentials.json');
   if (fs.existsSync(file)) {
@@ -24,7 +49,7 @@ function loadCredentials() {
 
 // มี GOOGLE_SHEET_ID = ใช้ Google Sheets, ไม่มี = เก็บลงไฟล์ในเครื่อง
 function createStore() {
-  const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+  const spreadsheetId = sheetId(process.env.GOOGLE_SHEET_ID);
   if (!spreadsheetId) {
     return createLocalStore(path.resolve(ROOT, process.env.DATA_FILE || 'data/db.json'));
   }
@@ -32,7 +57,7 @@ function createStore() {
   if (!credentials) {
     throw new Error(
       'ตั้งค่า GOOGLE_SHEET_ID แล้วแต่ไม่พบ credentials ของ service account ' +
-        '(วางไฟล์ credentials.json ไว้ที่โฟลเดอร์โปรเจกต์ หรือกำหนด GOOGLE_CREDENTIALS_JSON)',
+        '(วางไฟล์ credentials.json ไว้ที่โฟลเดอร์โปรเจกต์ หรือกำหนด GOOGLE_SERVICE_ACCOUNT_EMAIL กับ GOOGLE_PRIVATE_KEY)',
     );
   }
   return createSheetsStore({ spreadsheetId, credentials });
