@@ -17,10 +17,18 @@ const SESSION_DAYS = 7;
 const LOGIN_MAX_FAILS = 10;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
-let adminPassword = process.env.ADMIN_PASSWORD;
+const IS_SERVERLESS = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// ตัดช่องว่างและเครื่องหมายคำพูดที่ติดมาตอนคัดลอกค่าไปวางในหน้าตั้งค่า
+const envText = (value) => (value || '').trim().replace(/^(["'])(.*)\1$/, '$2');
+
+const passwordConfigured = Boolean(envText(process.env.ADMIN_PASSWORD));
+let adminPassword = envText(process.env.ADMIN_PASSWORD);
 if (!adminPassword) {
+  // บน serverless รหัสสุ่มจะเปลี่ยนทุก instance จึงใช้ไม่ได้ — หน้า login จะแจ้งให้ตั้งค่าแทน
   adminPassword = crypto.randomBytes(6).toString('base64url');
-  console.warn(`ยังไม่ได้ตั้ง ADMIN_PASSWORD ใน .env — ใช้รหัสชั่วคราว: ${adminPassword}`);
+  if (IS_SERVERLESS) console.error('ยังไม่ได้ตั้ง ADMIN_PASSWORD ใน environment variables');
+  else console.warn(`ยังไม่ได้ตั้ง ADMIN_PASSWORD ใน .env — ใช้รหัสชั่วคราว: ${adminPassword}`);
 }
 const sessionToken = crypto
   .createHmac('sha256', process.env.SESSION_SECRET || adminPassword)
@@ -190,7 +198,13 @@ app.post('/api/admin/login', (req, res) => {
     return res.status(429).json({ error: 'ลองผิดหลายครั้งเกินไป กรุณารอ 15 นาที' });
   }
 
-  if (!safeEqual((req.body || {}).password, adminPassword)) {
+  if (IS_SERVERLESS && !passwordConfigured) {
+    return res.status(500).json({
+      error: 'เซิร์ฟเวอร์ยังไม่เห็นค่า ADMIN_PASSWORD — ตรวจชื่อตัวแปรใน Netlify แล้วสั่ง deploy ใหม่',
+    });
+  }
+
+  if (!safeEqual(String((req.body || {}).password ?? '').trim(), adminPassword)) {
     loginFails.set(req.ip, {
       count: (fails?.count || 0) + 1,
       resetAt: fails?.resetAt || Date.now() + LOGIN_WINDOW_MS,
