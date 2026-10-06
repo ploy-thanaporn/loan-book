@@ -1,0 +1,25 @@
+# หน้าเว็บใน public/ เป็นไฟล์ static ส่วน /api/* รันเป็น Netlify Function (netlify/functions/api.js)
+[build]
+  command = "mkdir -p public/vendor && cp node_modules/html5-qrcode/html5-qrcode.min.js public/vendor/"
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/b/*"
+  to = "/borrow.html"
+  status = 200
+
+[[redirects]]
+  from = "/scan"
+  to = "/scan.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200

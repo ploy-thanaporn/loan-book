@@ -361,18 +361,31 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่' });
 });
 
-store
-  .init()
-  .then(() => {
-    app.listen(PORT, (err) => {
-      if (err) throw err;
-      const lan = lanAddress();
-      console.log(`เก็บข้อมูลที่: ${store.label}`);
-      console.log(`เปิดในเครื่อง:  http://localhost:${PORT}/admin`);
-      if (lan) console.log(`เปิดจากมือถือ (Wi-Fi เดียวกัน): http://${lan}:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('เริ่มระบบไม่สำเร็จ:', err.message);
-    process.exit(1);
+let initPromise = null;
+const init = () => {
+  initPromise ||= store.init().catch((err) => {
+    initPromise = null;
+    throw err;
   });
+  return initPromise;
+};
+
+// รันตรง ๆ (npm start) = เปิดเซิร์ฟเวอร์เอง, ถูก require จาก Netlify Function = ใช้แค่ app
+if (require.main === module) {
+  init()
+    .then(() => {
+      app.listen(PORT, (err) => {
+        if (err) throw err;
+        const lan = lanAddress();
+        console.log(`เก็บข้อมูลที่: ${store.label}`);
+        console.log(`เปิดในเครื่อง:  http://localhost:${PORT}/admin`);
+        if (lan) console.log(`เปิดจากมือถือ (Wi-Fi เดียวกัน): http://${lan}:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('เริ่มระบบไม่สำเร็จ:', err.message);
+      process.exit(1);
+    });
+}
+
+module.exports = { app, init };

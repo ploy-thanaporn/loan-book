@@ -2,4 +2,6 @@ node_modules/
 .env
 credentials.json
 data/
+public/vendor/
+.netlify/
 .DS_Store

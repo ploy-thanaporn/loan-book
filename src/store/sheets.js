@@ -1,7 +1,8 @@
 const { JWT } = require('google-auth-library');
 
 const API = 'https://sheets.googleapis.com/v4/spreadsheets';
-const PEOPLE_TTL_MS = 60 * 1000;
+// บน serverless แต่ละ instance มี cache ของตัวเอง จึงไม่ cache เพื่อให้ QR ที่เพิ่งสร้างใช้ได้ทันที
+const PEOPLE_TTL_MS = process.env.AWS_LAMBDA_FUNCTION_NAME ? 0 : 60 * 1000;
 
 const TABS = {
   people: ['id', 'name', 'createdAt', 'qr'],
